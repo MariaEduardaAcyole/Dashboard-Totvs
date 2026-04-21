@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard LGPD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand" id="nomecliente"></div>
+    <div class="sub">Dashboard LGPD</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Análise</div>
+    <a class="nav-item active" onclick="switchTab('visao-geral')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Visão Geral
+    </a>
+    <a class="nav-item" onclick="switchTab('inventario')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Inventário
+    </a>
+    <a class="nav-item" onclick="switchTab('riscos')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Registros de Risco
+    </a>
+    <div class="nav-section" style="margin-top:8px">LGPD</div>
+    <a class="nav-item" onclick="switchTab('matriz')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Matriz de Risco
+    </a>
+    <a class="nav-item" onclick="switchTab('plano')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Plano de Ação
+    </a>
+    <a class="nav-item" onclick="switchTab('heatmap')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+      Heatmap de Risco
+    </a>
+  </div>
+  <div class="sidebar-footer">Atualizado: <span id="lastUpdate">—</span></div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <h1 id="pageTitle">Visão Geral</h1>
+    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Carregar Excel
+    </button>
+    <input type="file" id="fileInput" accept=".xlsx,.xlsm,.csv" onchange="handleFileUpload(event)">
+    <button class="export-btn" onclick="exportCSV()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar CSV
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- =================== VISÃO GERAL =================== -->
+    <div class="tab-panel active" id="tab-visao-geral">
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <!-- Filtros -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <div class="filter-label">Empresa</div>
+          <select id="f-empresa" onchange="applyFilters()"><option value="">Todas</option></select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">Área</div>
+          <select id="f-area" onchange="applyFilters()"><option value="">Todas</option></select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">Processo</div>
+          <select id="f-processo" onchange="applyFilters()"><option value="">Todos</option></select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">Dados Sensíveis</div>
+          <select id="f-sensivel" onchange="applyFilters()">
+            <option value="">Todos</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">Dados de Menores</div>
+          <select id="f-menor" onchange="applyFilters()">
+            <option value="">Todos</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+        </div>
+        <button class="filter-reset" onclick="resetFilters()">↺ Limpar</button>
+      </div>
+
+      <!-- =================== GRÁFICOS VISÃO GERAL =================== -->
+      <!-- Linha 1: Indicadores de dados sensíveis e de menores (doughnut charts) -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title"><span class="dot" style="background:var(--risk-high)"></span>Dados Sensíveis</div>
+          <canvas id="chartSensivel"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span class="dot" style="background:var(--risk-med)"></span>Dados de Menores</div>
+          <canvas id="chartMenor"></canvas>
+        </div>
+
+      <!-- Linha 2: Distribuição de subprocessos por área (bar chart) e bases legais (doughnut) -->
+        <div class="chart-card chart-wide">
+          <div class="chart-title"><span class="dot"></span>Subprocessos por Área</div>
+          <canvas id="chartArea" style="max-height:300px"></canvas>
+        </div>
+        <div class="chart-card chart-wide">
+          <div class="chart-title"><span class="dot" style="background:var(--risk-crit)"></span>Bases Legais Utilizadas</div>
+          <canvas id="chartBaseLegal" style="max-height:280px"></canvas>
+        </div>
+
+      <!-- Linha 3: Transferências (doughnut charts Com/Sem) -->
+        <div class="chart-card">
+          <div class="chart-title"><span class="dot" style="background:#06b6d4"></span>Transferência Internacional</div>
+          <canvas id="chartTransfIntl"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span class="dot" style="background:var(--risk-med)"></span>Compartilhamento com Terceiros</div>
+          <canvas id="chartComTerceiros"></canvas>
+        </div>
+
+      <!-- Linha 4: Sistemas e terceiros (bar charts) -->
+        <div class="chart-card">
+          <div class="chart-title"><span class="dot" style="background:var(--risk-med)"></span>Sistemas</div>
+          <canvas id="chartSistemas"></canvas>
+        </div>
+        <div class="chart-card chart-wide">
+          <div class="chart-title"><span class="dot" style="background:var(--risk-low)"></span>Nomes dos Terceiros</div>
+          <canvas id="chartTerceiros" style="max-height:280px"></canvas>
+        </div>
+
+      <!-- Linha 5: Análise de transferências internacionais e empresas (bar charts) -->
+        <div class="chart-card chart-wide">
+          <div class="chart-title"><span class="dot" style="background:#06b6d4"></span>Países com Transferência</div>
+          <canvas id="chartPaises" style="max-height:280px"></canvas>
+        </div>
+        <div class="chart-card chart-wide">
+          <div class="chart-title"><span class="dot" style="background:#6366f1"></span>Empresas x Subprocessos</div>
+          <canvas id="chartEmpresasSubprocessos" style="max-height:280px"></canvas>
+        </div>
+
+      <!-- Linha 6: Tipos de dados processados (doughnut chart) -->
+        <div class="chart-card chart-wide">
+          <div class="chart-title"><span class="dot" style="background:#8b5cf6"></span>Tipos de Dados</div>
+          <canvas id="chartTiposDados" style="max-height:280px"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== INVENTÁRIO =================== -->
+    <div class="tab-panel" id="tab-inventario">
+      <div class="filter-bar">
+        <div class="filter-group">
+          <div class="filter-label">Empresa</div>
+          <select id="fi-empresa" onchange="applyFilters()"><option value="">Todas</option></select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">Área</div>
+          <select id="fi-area" onchange="applyFilters()"><option value="">Todas</option></select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">Dados Sensíveis</div>
+          <select id="fi-sensivel" onchange="applyFilters()">
+            <option value="">Todos</option><option value="Sim">Sim</option><option value="Não">Não</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">Dados de Menores</div>
+          <select id="fi-menor" onchange="applyFilters()">
+            <option value="">Todos</option><option value="Sim">Sim</option><option value="Não">Não</option>
+          </select>
+        </div>
+        <button class="filter-reset" onclick="resetFilters()">↺ Limpar</button>
+      </div>
+
+      <!-- Indicador de filtro ativo por gráfico -->
+      <div id="chartFilterIndicator" style="display:none; padding: 12px 16px; margin: 12px 0; background: rgba(79, 142, 247, 0.15); border-left: 4px solid #4f8ef7; border-radius: 4px; color: #4f8ef7; font-size: 14px; font-weight: 500;">
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Subprocessos — <span id="tableCount">0</span> registros</h3>
+          <input class="search-input" type="text" placeholder="Buscar em toda a tabela..." id="tableSearch" oninput="renderTable()">
+        </div>
+        <div class="table-wrap">
+          <table id="mainTable">
+            <thead>
+              <tr>
+                <th onclick="sortTable('ID')"># ID</th>
+                <th onclick="sortTable('Empresa')">Empresa</th>
+                <th onclick="sortTable('Area')">Área</th>
+                <th onclick="sortTable('Processo')">Processo</th>
+                <th onclick="sortTable('Subprocesso')">Subprocesso</th>
+                <th onclick="sortTable('Dado_Sensivel')">Sensível</th>
+                <th onclick="sortTable('Dado_Menor')">Menor</th>
+                <th onclick="sortTable('Armazenamento')">Armazenamento</th>
+                <th onclick="sortTable('Compartilhamento_Terceiros')">Terceiros</th>
+                <th onclick="sortTable('Transferencia_Internacional')">Transf. Intl.</th>
+                <th>Base Legal</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="table-pagination" id="tablePagination"></div>
+      </div>
+    </div>
+
+    <!-- =================== REGISTROS DE RISCO =================== -->
+    <div class="tab-panel" id="tab-riscos">
+      <div class="kpi-grid" id="riskKpiGrid"></div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title"><span class="dot" style="background:var(--risk-high)"></span>Nível de Risco</div>
+          <canvas id="chartRiskLevel"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span class="dot" style="background:var(--risk-med)"></span>Probabilidade</div>
+          <canvas id="chartRiskProb"></canvas>
+        </div>
+        <div class="chart-card chart-wide">
+          <div class="chart-title"><span class="dot"></span>Riscos por Empresa / Área</div>
+          <canvas id="chartRiskArea" style="max-height:300px"></canvas>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Registro de Riscos</h3>
+          <input class="search-input" type="text" placeholder="Buscar risco..." id="riskSearch" oninput="renderRiskTable()">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Empresa</th>
+                <th>Área</th>
+                <th>Nome do Risco</th>
+                <th>Probabilidade</th>
+                <th>Severidade</th>
+                <th>Nível</th>
+                <th>Estratégia</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="riskTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== MATRIZ DE RISCO =================== -->
+    <div class="tab-panel" id="tab-matriz">
+      <div style="margin-bottom:16px; font-size:13px; color:var(--text-muted); line-height:1.6">
+        Classificação automática de risco por subprocesso baseada em: presença de dados sensíveis, dados de menores, ausência de base legal e compartilhamento com terceiros/internacional.
+      </div>
+      <div class="risk-heatmap" id="riskMatrixList"></div>
+    </div>
+
+    <!-- =================== PLANO DE AÇÃO =================== -->
+    <div class="tab-panel" id="tab-plano">
+      <div style="margin-bottom:20px; font-size:13px; color:var(--text-muted); line-height:1.6">
+        Plano de ação sugerido com base nos riscos identificados, ordenado por prioridade de adequação à LGPD.
+      </div>
+      <div class="action-grid" id="actionGrid"></div>
+    </div>
+
+    <!-- =================== HEATMAP =================== -->
+    <div class="tab-panel" id="tab-heatmap">
+      <div style="margin-bottom:16px; font-size:13px; color:var(--text-muted)">
+        Concentração de risco por área. Quanto maior o número, maior a exposição.
+      </div>
+      <div class="chart-card" style="margin-bottom:20px; overflow-x:auto">
+        <div class="chart-title"><span class="dot" style="background:var(--risk-crit)"></span>Heatmap de Risco por Área</div>
+        <table class="heatmap-table" id="heatmapTable"></table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- UPLOAD OVERLAY -->
+<div class="upload-screen" id="uploadScreen" onclick="hideUploadScreen(event)">
+  <div class="upload-box" id="uploadBox">
+    <div class="upload-icon">📊</div>
+    <h2>Carregar Dados</h2>
+    <p>Arraste e solte um arquivo Excel (.xlsx, .xlsm) ou CSV, ou clique para selecionar</p>
+    <button class="upload-box-btn" onclick="document.getElementById('fileInput').click()">Selecionar Arquivo</button>
+  </div>
+</div>
+<script src="app.js">
+
+
+</script>
+</body>
+</html>
