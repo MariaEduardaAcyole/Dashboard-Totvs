@@ -52,24 +52,50 @@
 
 <!-- MAIN -->
 <main class="main">
-  <div class="topbar">
-    <h1 id="pageTitle">Visão Geral</h1>
-    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Carregar Excel
+ <div class="topbar">
+  <h1 id="pageTitle">Visão Geral</h1>
+
+  <div style="display: flex; gap: 8px;">
+    <!-- BOTÃO INVENTÁRIO -->
+    <button class="upload-btn"
+      onclick="document.getElementById('fileInputInventario').click()">
+      Inventário
     </button>
-    <input type="file" id="fileInput" accept=".xlsx,.xlsm,.csv" onchange="handleFileUpload(event)">
-    <button class="export-btn" onclick="exportCSV()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Exportar CSV
+
+    <!-- (OPCIONAL) BOTÃO MATRIZ - pode remover se não usar -->
+    <!--
+    <button class="upload-btn"
+      onclick="document.getElementById('fileInputMatriz').click()">
+      Matriz de Risco
     </button>
+    -->
   </div>
+
+  <!-- INPUTS SEMPRE ESCONDIDOS -->
+  <input type="file"
+    id="fileInputInventario"
+    accept=".xlsx,.xlsm,.csv"
+    onchange="handleFileUpload(event)"
+    style="display:none;">
+
+  <input type="file"
+    id="fileInputMatriz"
+    accept=".xlsx,.xlsm,.csv"
+    onchange="handleFileUploadMatriz(event)"
+    style="display:none;">
+
+  <!-- EXPORT -->
+  <button class="export-btn" onclick="exportCSV()">
+    Exportar CSV
+  </button>
+</div>
 
   <div class="content">
 
     <!-- =================== VISÃO GERAL =================== -->
     <div class="tab-panel active" id="tab-visao-geral">
       <div class="kpi-grid" id="kpiGrid"></div>
+
 
       <!-- Filtros -->
       <div class="filter-bar">
@@ -304,12 +330,10 @@
     <div class="upload-icon">📊</div>
     <h2>Carregar Dados</h2>
     <p>Arraste e solte um arquivo Excel (.xlsx, .xlsm) ou CSV, ou clique para selecionar</p>
-    <button class="upload-box-btn" onclick="document.getElementById('fileInput').click()">Selecionar Arquivo</button>
+    <button class="upload-box-btn" onclick="document.getElementById('fileInputInventario').click()">Selecionar Arquivo</button>
   </div>
 </div>
-<script src="app.js">
-
-
-</script>
+<script src="app.js" defer></script>
+<script src="matriz.js" defer></script>
 </body>
 </html>

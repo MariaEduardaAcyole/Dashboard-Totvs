@@ -393,6 +393,12 @@
     padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 500;
     background: var(--surface2); color: var(--text-dim);
   }
+  .action-btn {
+    padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 500;
+    background: var(--accent); color: white; border: none; cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .action-btn:hover { opacity: 0.9; }
   
   /* ============================================
      UPLOAD SCREEN
@@ -469,6 +475,45 @@
   .heat-2 { background: rgba(245,158,11,0.15); color: var(--risk-med); }
   .heat-3 { background: rgba(239,68,68,0.15); color: var(--risk-high); }
   .heat-4 { background: rgba(192,38,211,0.2); color: var(--risk-crit); }
+
+  /* ============================================
+     MATRIZ INSIGHTS
+  ============================================ */
+  .matriz-insights-container {
+    margin: 16px 0;
+    padding: 16px;
+    background: #f8f9ff;
+    border-radius: 8px;
+    border-left: 4px solid #4f8ef7;
+  }
+
+  .matriz-insights-header h3 {
+    margin: 0 0 12px 0;
+    color: #2c3e50;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .matriz-insights-body .insight-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    color: #34495e;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .matriz-insights-body .insight-item:last-child {
+    border-bottom: none;
+  }
+
+  .matriz-insights-body .insight-item::before {
+    content: "•";
+    color: #4f8ef7;
+    margin-right: 8px;
+  }
 
   /* ============================================
      RISK REGISTER TABLE
