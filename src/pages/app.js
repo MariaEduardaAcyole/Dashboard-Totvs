@@ -23,112 +23,48 @@ const chartFieldMap = {
     "chartEmpresasSubprocessos": "empresa",
     "chartTransfIntl": "transfIntl",
     "chartComTerceiros": "terceiros",
-    "chartTiposDados": "dados"
+    "chartTiposDados": "dados",
+    "chartAreaInv": "area",
+    "chartBaseLegalInv": "baseLegal",
+    "chartSistemasInv": "sistemas",
+    "chartTerceirosInv": "nomeTerceiro",
+    "chartPaisesInv": "paises",
+    "chartSensivelInv": "sensivel",
+    "chartMenorInv": "menor",
+    "chartEmpresasSubprocessosInv": "empresa",
+    "chartTransfIntlInv": "transfIntl",
+    "chartComTerceirosInv": "terceiros",
+    "chartTiposDadosInv": "dados"
 };
+
+let inventoryRiskLinks = {};
+const INVENTORY_SHEET_NAMES = [
+    "Inventário SONEPAR",
+    "Inventario SONEPAR",
+    "Inventário",
+    "Inventario",
+    "Dados do Inventário",
+    "Inventario LGPD"
+];
+const INVENTORY_REQUIRED_FIELDS = [
+    "empresa",
+    "area",
+    "processo",
+    "subprocesso",
+    "dados"
+];
 // =============================================
 // UTILITÁRIOS
 // =============================================
 
-let nomecliente = "Duda";
+let nomecliente = "NOME DO CLIENTE";
 
 document.addEventListener("DOMContentLoaded", () => {
     const el = document.getElementById('nomecliente');
     if (el) el.innerText = nomecliente;
 });
 
-function normalizeRowKeys(row) {
-    const newRow = {};
-
-    Object.keys(row).forEach(key => {
-        const cleanKey = key.trim(); // remove espaços invisíveis
-        newRow[cleanKey] = row[key];
-    });
-
-    return newRow;
-}
-
-function normalizeText(v) {
-    return String(v || "")
-        .toLowerCase()
-        .trim();
-}
-
-function normalizeFilterValue(fieldName, value) {
-    const normalizedValue = normalizeText(value);
-
-    if (fieldName === 'sensivel' || fieldName === 'menor') {
-        return normalizedValue === 'sim' || normalizedValue === 'true';
-    }
-
-    if (fieldName === 'terceiros' || fieldName === 'transfIntl') {
-        if (normalizedValue.includes('com') || normalizedValue === 'sim') return 'sim';
-        if (normalizedValue.includes('sem') || normalizedValue === 'nao' || normalizedValue === 'não') return 'não';
-        return normalizedValue;
-    }
-
-    return normalizedValue;
-}
-
-function chartLabelToFilterValue(chartId, label) {
-    const normalizedLabel = normalizeText(label);
-
-    if (chartId === 'chartTransfIntl') {
-        return normalizedLabel.includes('com') ? 'sim' : 'não';
-    }
-
-    if (chartId === 'chartComTerceiros') {
-        return normalizedLabel.includes('com') ? 'sim' : 'não';
-    }
-
-    return normalizedLabel;
-}
-
-function matchesFilterValue(fieldName, rowValue, filterValue) {
-    const normalizedFilter = normalizeFilterValue(fieldName, filterValue);
-
-    if (fieldName === 'sensivel' || fieldName === 'menor') {
-        return rowValue === normalizedFilter;
-    }
-
-    if (fieldName === 'terceiros' || fieldName === 'transfIntl') {
-        return normalizeFilterValue(fieldName, rowValue) === normalizedFilter;
-    }
-
-    if (Array.isArray(rowValue)) {
-        return rowValue
-            .map(v => normalizeText(v))
-            .includes(normalizedFilter);
-    }
-
-    return normalizeText(rowValue) === normalizedFilter;
-}
-
-function getField(row, possibleNames) {
-    const keys = Object.keys(row);
-
-    for (const key of keys) {
-        const normalizedKey = normalizeText(key);
-
-        for (const name of possibleNames) {
-            if (normalizedKey.includes(name)) {
-                return row[key];
-            }
-        }
-    }
-
-    return "";
-}
-
-function splitMulti(value) {
-    if (!value) return ["não informado"];
-
-    return [...new Set(
-        String(value)
-            .split(";")
-            .map(v => normalizeText(v.trim())) // 👈 trim EXTRA aqui
-            .filter(v => v && v !== "")
-    )];
-}
+// Funções de utilitários de dados movidas para src/components/dataHelpers.js
 
 // =============================================
 // NAVEGAÇÃO
@@ -168,6 +104,12 @@ function switchTab(tabId) {
     // Reaplica filtros com o chartFilters correto
     updateFilterIndicator();
     applyFilters();
+
+    if (tabId === 'matriz' || tabId === 'heatmap') {
+        if (typeof renderRiskHeatmap === 'function') {
+            renderRiskHeatmap();
+        }
+    }
 }
 
 // =============================================
@@ -202,45 +144,8 @@ const COLUMN_MAP = {
     transfIntl: ["Há transferência internacional de dados?"],
     paises: ["Caso sim, informe quais os Países e Estados que recebem estes dados."]
 };
-console.log("COLUNAS DETECTADAS:", Object.keys(json[0] || {}));
-
-console.log("VALORES MENOR (bruto):");
-json.slice(0, 10).forEach((r, i) => {
-    const key = Object.keys(r).find(k =>
-        k.toLowerCase().includes("menor")
-    );
-    console.log(i, key, key ? r[key] : "SEM COLUNA");
-});
-
-function normalizeHeader(str) {
-    return String(str || "")
-        .toLowerCase()
-        .normalize("NFD") // remove acentos
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-function getValue(row, field) {
-    const possibleNames = COLUMN_MAP[field];
-    if (!possibleNames) return "";
-
-    const keys = Object.keys(row);
-
-    for (const key of keys) {
-        for (const name of possibleNames) {
-            if (key.includes(name)) {
-                return row[key];
-            }
-        }
-    }
-
-    return "";
-}
 
 function handleFileUpload(event) {
-    console.log("UPLOAD DISPARADO");
-
     const file = event.target.files[0];
     if (!file) return;
 
@@ -250,31 +155,50 @@ function handleFileUpload(event) {
         const dataArray = new Uint8Array(e.target.result);
         const workbook = XLSX.read(dataArray, { type: 'array' });
 
-        const sheet = workbook.Sheets["Inventário SONEPAR"];
+        const sheetNames = workbook.SheetNames.join(', ');
+        console.log('Sheets disponíveis:', sheetNames);
+
+        let sheet = findBestSheet(workbook, INVENTORY_SHEET_NAMES);
+        if (!sheet && workbook.SheetNames.length > 0) {
+            sheet = workbook.Sheets[workbook.SheetNames[0]];
+            console.warn('Nenhuma aba padrão encontrada, usando a primeira aba:', workbook.SheetNames[0]);
+        }
+
         if (!sheet) {
-            alert("Aba 'Inventário SONEPAR' não encontrada.");
+            alert("Nenhuma planilha encontrada no arquivo de inventário.");
             return;
         }
 
-        const json = XLSX.utils.sheet_to_json(sheet, {
-            range: 2,
-            defval: ""
-        });
+        const json = parseSheetWithHeaderDetection(sheet, INVENTORY_REQUIRED_FIELDS, COLUMN_MAP);
 
-        console.log("JSON:", json);
+        if (!json || json.length === 0) {
+            alert("A planilha de inventário foi carregada, mas não contém dados válidos.");
+            return;
+        }
 
-        // ✅ AQUI DENTRO (correto)
-        rawData = json.map(normalizeRowKeys);
+        rawData = json;
 
-        console.log("Colunas:", Object.keys(rawData[0] || {}));
-        console.log("Primeira linha:", rawData[0]);
+        const missingFields = listMissingColumns(rawData[0], INVENTORY_REQUIRED_FIELDS, COLUMN_MAP);
+        if (missingFields.length > 0) {
+            alert(`Campos obrigatórios ausentes no inventário: ${missingFields.join(', ')}. Verifique o arquivo e tente novamente.`);
+            rawData = [];
+            return;
+        }
+
+        console.log("Colunas detectadas no inventário:", Object.keys(rawData[0] || {}));
+        console.log("Primeira linha do inventário:", rawData[0]);
 
         normalizeData();
         populateFilterOptions();
+        buildInventoryRiskLinks();
         applyFilters();
         updateFilterIndicator();
 
-        alert("Dados carregados: " + data.length);
+        const riskNote = Array.isArray(riskData) && riskData.length > 0
+            ? `${getLinkedRiskSummary().totalRisks} riscos relacionados detectados.`
+            : 'Importe a matriz de risco para ver conexões entre inventário e riscos.';
+
+        alert(`Dados do inventário carregados: ${data.length}. ${riskNote}`);
     };
 
     reader.readAsArrayBuffer(file);
@@ -284,7 +208,7 @@ function handleFileUpload(event) {
 // NORMALIZAÇÃO
 // =============================================
 function normalizeData() {
-    data = rawData.map(row => {
+    data = rawData.map((row, idx) => {
 
         const sensivelRaw = normalizeText(getValue(row, "sensivel"));
 const sensivel = 
@@ -304,8 +228,12 @@ const menor =
         if (sensivel || menor) risco = "alto";
         if (sensivel && menor) risco = "crítico";
 
+        const firstKey = Object.keys(row)[0];
+        const rawId = getValue(row, "id") || row[firstKey] || "";
+
         return {
-            id: getValue(row, "id"),
+            id: rawId,
+            origIndex: idx,
 
             empresa: splitMulti(getValue(row, "empresa")),
             area: splitMulti(getValue(row, "area")),
@@ -334,9 +262,102 @@ const menor =
             nivelRisco: risco
         };
 
-    }).filter(r => r.id || r.processo.length > 0);
-console.log("MENOR RAW TEST:", getValue(rawData[0], "menor"));
+    }).filter(r => (r.id && String(r.id).trim() !== "") || (Array.isArray(r.processo) && r.processo.length > 0));
 
+}
+
+function getInventoryRowKey(row) {
+    const rawId = normalizeText(row.id || "");
+    if (rawId) return rawId;
+    if (typeof row.origIndex === 'number') return `__row_${row.origIndex}`;
+    return normalizeText(String(row[Object.keys(row)[0]] || ""));
+}
+
+function getRowKeyFromRaw(rawRow, index) {
+    const rawId = normalizeText(getValue(rawRow, 'id') || "");
+    if (rawId) return rawId;
+    return normalizeText(String(rawRow[Object.keys(rawRow)[0]] || `__row_${index}`));
+}
+
+function getRiskUniqueId(risk) {
+    const id = normalizeText(risk.id || "");
+    if (id) return id;
+    return normalizeText(`${risk.empresa}|${risk.area}|${risk.subprocesso}|${risk.nomeRisco}`);
+}
+
+function riskMatchesInventoryRow(inv, risk) {
+    const invEmpresa = inv.empresa.map(normalizeText);
+    const invArea = inv.area.map(normalizeText);
+    const invProcesso = inv.processo.map(normalizeText);
+    const invSubprocessos = splitMulti(inv.subprocesso || "")
+        .map(normalizeText)
+        .filter(v => v && v !== 'não informado' && v !== '—');
+
+    const riskEmpresa = normalizeText(risk.empresa);
+    const riskArea = normalizeText(risk.area);
+    const riskSubprocessos = splitMulti(risk.subprocesso || "")
+        .map(normalizeText)
+        .filter(v => v && v !== 'não informado' && v !== '—');
+    const riskProcesso = normalizeText(risk.nomeRisco || risk.nomeGrupo || risk.classificacao || "");
+
+    const empresaMatch = !riskEmpresa || invEmpresa.includes(riskEmpresa);
+    const areaMatch = !riskArea || invArea.includes(riskArea);
+
+    let subprocessoMatch = true;
+    if (invSubprocessos.length > 0 && riskSubprocessos.length > 0) {
+        subprocessoMatch = invSubprocessos.some(invSub =>
+            riskSubprocessos.some(riskSub =>
+                invSub === riskSub || invSub.includes(riskSub) || riskSub.includes(invSub)
+            )
+        );
+    }
+
+    let processoMatch = false;
+    if (riskProcesso) {
+        processoMatch = invProcesso.some(p =>
+            p === riskProcesso || p.includes(riskProcesso) || riskProcesso.includes(p)
+        );
+    }
+
+    const relationMatch = (invSubprocessos.length > 0 && riskSubprocessos.length > 0)
+        ? subprocessoMatch
+        : processoMatch;
+
+    return empresaMatch && areaMatch && relationMatch;
+}
+
+function buildInventoryRiskLinks() {
+    inventoryRiskLinks = {};
+
+    if (!Array.isArray(data) || !data.length || !Array.isArray(riskData) || !riskData.length) {
+        return;
+    }
+
+    data.forEach(inv => {
+        const invKey = getInventoryRowKey(inv);
+        const matches = riskData.filter(risk => riskMatchesInventoryRow(inv, risk));
+        const uniqueRiskIds = [...new Set(matches.map(getRiskUniqueId))];
+        const seen = new Set();
+        const byLevel = matches.reduce((acc, r) => {
+            const riskKey = getRiskUniqueId(r);
+            if (seen.has(riskKey)) return acc;
+            seen.add(riskKey);
+            acc[r.nivelRisco] = (acc[r.nivelRisco] || 0) + 1;
+            return acc;
+        }, {});
+
+        inventoryRiskLinks[invKey] = {
+            total: uniqueRiskIds.length,
+            riskIds: uniqueRiskIds,
+            byLevel
+        };
+    });
+}
+
+function getLinkedRiskSummary() {
+    const linked = Object.values(inventoryRiskLinks);
+    const distinctRiskIds = new Set(linked.flatMap(item => item.riskIds || []));
+    return { totalRisks: distinctRiskIds.size };
 }
 
 // =============================================
@@ -408,6 +429,47 @@ updateCharts(); // NOVA FUNÇÃO
 
 function updateCharts() {
     renderCharts();
+    renderInventoryCharts();
+}
+
+function renderInventoryCharts() {
+    createChart("chartAreaInv", groupCount("area"), "bar");
+    createChart("chartBaseLegalInv", groupCount("baseLegal"), "doughnut");
+    createChart("chartSistemasInv", topN(sortByValue(groupCount("sistemas")), 10), "bar", "y");
+    createChart("chartTerceirosInv", topN(sortByValue(groupCount("nomeTerceiro")), 10), "bar", "y");
+    createChart("chartPaisesInv", sortByValue(groupCount("paises")), "bar");
+    createChart("chartSensivelInv", {
+        "Sim": filtered.filter(r => r.sensivel).length,
+        "Não": filtered.filter(r => !r.sensivel).length
+    }, "doughnut");
+    createChart("chartMenorInv", {
+        "Sim": filtered.filter(r => r.menor).length,
+        "Não": filtered.filter(r => !r.menor).length
+    }, "doughnut");
+    const processosTransfIntl = new Set(
+        filtered.filter(r => r.transfIntl === "sim").flatMap(r => r.processo)
+    ).size;
+    const totalProcessosIntl = new Set(filtered.flatMap(r => r.processo)).size;
+    createChart("chartTransfIntlInv", {
+        "Com Transferência Intl": processosTransfIntl,
+        "Sem Transferência Intl": totalProcessosIntl - processosTransfIntl
+    }, "doughnut");
+    const processosComTerceiros = new Set(
+        filtered.filter(r => r.terceiros === "sim").flatMap(r => r.processo)
+    ).size;
+    const totalProcessosTerceiros = new Set(filtered.flatMap(r => r.processo)).size;
+    createChart("chartComTerceirosInv", {
+        "Com Compartilhamento": processosComTerceiros,
+        "Sem Compartilhamento": totalProcessosTerceiros - processosComTerceiros
+    }, "doughnut");
+    const empresasSubprocessos = filtered.reduce((acc, r) => {
+        r.empresa.forEach(emp => {
+            acc[emp] = (acc[emp] || 0) + 1;
+        });
+        return acc;
+    }, {});
+    createChart("chartEmpresasSubprocessosInv", sortByValue(empresasSubprocessos), "bar");
+    createChart("chartTiposDadosInv", groupCount("dados"), "doughnut");
 }
 
 function resetFilters() {
@@ -462,13 +524,21 @@ function renderKPIs() {
         filtered.flatMap(d => d.processo)
     ).size;
 
+    const riskIds = new Set(
+        filtered.flatMap(r => {
+            const key = getInventoryRowKey(r);
+            return (inventoryRiskLinks[key]?.riskIds || []);
+        })
+    );
+    const relatedRiskCount = riskIds.size;
+
     kpiGrid.innerHTML = `
          <div class="kpi-card good"><div class="kpi-label">Empresas</div><div class="kpi-value">${uniqueEmpresas}</div></div>
         <div class="kpi-card"><div class="kpi-label">Subprocessos</div><div class="kpi-value">${total}</div></div>
         <div class="kpi-card danger"><div class="kpi-label">Sensíveis</div><div class="kpi-value">${sensiveis}</div></div>
         <div class="kpi-card purple"><div class="kpi-label">Menores</div><div class="kpi-value">${menores}</div></div>
         <div class="kpi-card yellow"><div class="kpi-label">Processos</div><div class="kpi-value">${processos}</div></div>
-
+        <div class="kpi-card danger"><div class="kpi-label">Riscos Relacionados</div><div class="kpi-value">${relatedRiskCount}</div></div>
     `;
 }
 
@@ -605,33 +675,57 @@ function clearChartFilter() {
 function renderTable() {
     const tbody = document.getElementById("tableBody");
     if (!tbody) return; // Se não está na aba de inventário, não renderiza
-
     const searchInput = document.getElementById("tableSearch");
     const search = searchInput ? normalizeText(searchInput.value) : "";
 
-    const displayData = filtered.filter(r =>
-        r.subprocesso.toLowerCase().includes(search)
-    );
+    // Se não houver dados brutos, não tenta renderizar tabela dinâmica
+    if (!rawData || rawData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="999">Nenhum dado do inventário carregado.</td></tr>';
+        const tableCount = document.getElementById("tableCount");
+        if (tableCount) tableCount.innerText = 0;
+        return;
+    }
 
-    tbody.innerHTML = displayData.map(r => `
-        <tr>
-            <td>${r.id}</td>
-            <td>${r.empresa.join(", ")}</td>
-            <td>${r.area.join(", ")}</td>
-            <td>${r.processo.join(", ")}</td>
-            <td>${r.subprocesso}</td>
-            <td>${r.sensivel ? "Sim" : "Não"}</td>
-            <td>${r.menor ? "Sim" : "Não"}</td>
-            <td>${r.armazenamento}</td>
-            <td>${r.terceiros}</td>
-            <td>${r.transfIntl}</td>
-            <td>${r.nivelRisco}</td>
-            <td>${r.baseLegal.join(", ")}</td>
-        </tr>
-    `).join("");
+    // Monta lista de colunas a partir da primeira linha do arquivo
+    const rawHeaders = Object.keys(rawData[0]);
+    const thead = document.querySelector('#mainTable thead');
+    if (thead) {
+        const tableHeaders = [...rawHeaders, 'Riscos Relacionados'];
+        thead.innerHTML = '<tr>' + tableHeaders.map(h => `<th>${h}</th>`).join('') + '</tr>';
+    }
+
+    // Filtra linhas processadas, mantendo referência ao rawRow via origIndex
+    const displayProcessed = filtered.filter(r => {
+        const rawRow = rawData[r.origIndex] || rawData.find(row => {
+            const firstKey = Object.keys(row)[0];
+            return String(row[firstKey]) === String(r.id) || String(getValue(row, 'id')) === String(r.id);
+        });
+
+        const searchableText = `\n            ${r.id} ${Array.isArray(r.empresa)?r.empresa.join(' '):r.empresa} ${Array.isArray(r.area)?r.area.join(' '):r.area} ${Array.isArray(r.processo)?r.processo.join(' '):r.processo} \n            ${r.subprocesso} ${Array.isArray(r.dados)?r.dados.join(' '):r.dados} ${r.armazenamento} ${Array.isArray(r.sistemas)?r.sistemas.join(' '):r.sistemas}\n            ${r.baseLegal? r.baseLegal.join(' '):''} ${r.nomeTerceiro? r.nomeTerceiro.join(' '):''} ${r.paises? r.paises.join(' '):''}\n            ${getValue(rawRow || {}, 'responsavel')} ${getValue(rawRow || {}, 'descricao')}\n        `.toLowerCase();
+
+        return searchableText.includes(search);
+    });
+
+    const rows = displayProcessed.map(r => rawData[r.origIndex] || rawData.find(row => {
+        const firstKey = Object.keys(row)[0];
+        return String(row[firstKey]) === String(r.id) || String(getValue(row, 'id')) === String(r.id);
+    })).filter(Boolean);
+
+    tbody.innerHTML = rows.map((row, index) => {
+        const rawKey = getRowKeyFromRaw(row, index);
+        const riskLink = inventoryRiskLinks[rawKey] || { total: 0, byLevel: {} };
+        const riskDetail = riskLink.total > 0
+            ? `${riskLink.total} risco(s) — ${Object.entries(riskLink.byLevel).map(([level, count]) => `${level}: ${count}`).join(', ')}`
+            : 'Nenhum risco relacionado';
+
+        return '<tr>' +
+            rawHeaders.map(h => `<td>${(row[h] !== undefined && row[h] !== null) ? row[h] : ''}</td>`).join('') +
+            `<td>${riskDetail}</td>` +
+            '</tr>';
+    }).join('');
 
     const tableCount = document.getElementById("tableCount");
-    if (tableCount) tableCount.innerText = displayData.length;
+    if (tableCount) tableCount.innerText = rows.length;
 }
 
 // =============================================
@@ -691,125 +785,6 @@ function renderCharts() {
     createChart("chartTiposDados", groupCount("dados"), "doughnut");
 }
 
-function createChart(id, dataset, type, indexAxis) {
-    const ctx = document.getElementById(id);
-    if (!ctx) return;
-
-    const labels = Object.keys(dataset).filter(k => k && k !== "undefined");
-    const data = labels.map(k => dataset[k]);
-    const chartField = chartFieldMap[id];
-    const activeFiltersForChart = chartFilters[chartField] || [];
-
-    const colors = [
-        '#4f8ef7', '#06b6d4', '#10b981', '#f59e0b', '#ef4444',
-        '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1'
-    ];
-
-    const backgroundColors = type === 'doughnut'
-        ? labels.map((label, index) => {
-            const filterValue = chartLabelToFilterValue(id, label);
-            return activeFiltersForChart.includes(filterValue)
-                ? colors[index % colors.length]
-                : 'rgba(100, 100, 100, 0.25)';
-        })
-        : colors[0];
-
-    const chartConfig = {
-        type,
-        data: {
-            labels: labels,
-            datasets: [{
-                label: id.replace('chart', ''),
-                data: data,
-                backgroundColor: backgroundColors,
-                borderColor: type === 'doughnut'
-                    ? '#141720'
-                    : '#4f8ef7',
-                borderWidth: type === 'doughnut' ? 2 : 1,
-                borderRadius: 6,
-                hoverBackgroundColor: 'rgba(79, 142, 247, 0.9)'
-            }]
-        },
-        options: {
-            indexAxis: indexAxis || 'x',
-            responsive: true,
-            onClick: (event, elements, chart) => {
-                if (elements && elements.length > 0) {
-                    const index = elements[0].index;
-                    let label = labels[index];
-                    
-                    if (!label && chart.data.labels && chart.data.labels[index]) {
-                        label = chart.data.labels[index];
-                    }
-                    
-                    if (label) {
-                        filterByChartClick(id, label);
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: type === 'doughnut',
-                    position: 'bottom',
-                    labels: {
-                        color: '#e8eaf0',
-                        font: { size: 12 },
-                        padding: 15,
-                        cursor: 'pointer'
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 10,
-                    borderRadius: 6,
-                    titleFont: { size: 13, weight: 'bold' },
-                    bodyFont: { size: 12 },
-                    callbacks: {
-                        label: function(context) {
-                            let value;
-                            if (context.parsed !== undefined) {
-                                if (typeof context.parsed === "object") {
-                                    value = context.parsed.x ?? context.parsed.y;
-                                } else {
-                                    value = context.parsed;
-                                }
-                            }
-                            return 'Aparições: ' + (value ?? 0);
-                        }
-                    }
-                }
-            },
-            scales: type === 'doughnut' ? {} : {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        display: indexAxis === 'y' ? false : true,
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: '#7a8299',
-                        font: { size: 11 }
-                    }
-                },
-                x: {
-                    grid: { display: indexAxis === 'y' ? true : false, color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: {
-                        color: '#7a8299',
-                        font: { size: 11 },
-                        maxRotation: indexAxis === 'y' ? 0 : 45,
-                        minRotation: 0
-                    }
-                }
-            }
-        }
-    };
-
-    if (charts[id]) {
-        charts[id].destroy();
-    }
-
-    charts[id] = new Chart(ctx, chartConfig);
-}
 
 // =============================================
 // RENDER GERAL
@@ -817,9 +792,11 @@ function createChart(id, dataset, type, indexAxis) {
 function renderAll() {
     renderKPIs();
     renderCharts();
+    renderInventoryCharts();
     renderTable();
     renderRiskKpis();
     renderRiskCharts();
+    renderMatrixCharts();
     renderRiskTable();
     renderMatrix();
     renderActionPlan();
