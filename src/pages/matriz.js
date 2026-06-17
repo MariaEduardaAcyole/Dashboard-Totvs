@@ -122,6 +122,15 @@ function handleFileUploadMatriz(event) {
 
     reader.readAsArrayBuffer(file);
 }
+function normalize(text){
+   return text
+      ?.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .replace(/[-_]/g," ")
+      .replace(/\s+/g," ")
+      .trim();
+}
 
 // =============================================
 // OBTER VALOR DE CAMPO

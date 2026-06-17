@@ -122,7 +122,7 @@ const COLUMN_MAP = {
     area: ["Nome da área de negócio"],
     responsavel: [" Nome do responsável pelo processo"],
     processo: ["Nome do processo"],
-    subprocesso: ["Nome do subprocesso"],
+    subprocesso: ["Nome do sub-processo"],
     descricao: ["Descrição do subprocesso"],
 
     dados: ["Quais dados?"],

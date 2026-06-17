@@ -180,7 +180,7 @@ const COLUMN_MAP = {
     area: ["Nome da área de negócio"],
     responsavel: [" Nome do responsável pelo processo"],
     processo: ["Nome do processo"],
-    subprocesso: ["Nome do subprocesso"],
+    subprocesso: ["Nome do sub-processo"],
     descricao: ["Descrição do subprocesso"],
 
     dados: ["Quais dados?"],
@@ -250,7 +250,7 @@ function handleFileUpload(event) {
         const dataArray = new Uint8Array(e.target.result);
         const workbook = XLSX.read(dataArray, { type: 'array' });
 
-        const sheet = workbook.Sheets["Inventário SONEPAR"];
+        const sheet = workbook.Sheets["Inventário_Sonepar"];
         if (!sheet) {
             alert("Aba 'Inventário SONEPAR' não encontrada.");
             return;

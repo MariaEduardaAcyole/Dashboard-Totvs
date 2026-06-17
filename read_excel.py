@@ -20,7 +20,7 @@ if os.path.exists(file_path):
     print()
     
     # 2. Verificar se existe a aba 'Inventário SONEPAR'
-    target_sheet = 'Inventário SONEPAR'
+    target_sheet = 'Inventário_Sonepar'
     if target_sheet in wb.sheetnames:
         print('=' * 60)
         print(f'2. COLUNAS DA ABA "{target_sheet}":')
