@@ -2,7 +2,7 @@ import openpyxl
 import os
 
 # Caminho do arquivo
-file_path = r'ignorar\Inventário_SONEPAR_Consolidado 2026 (6).xlsm'
+file_path = r'arquivos\Inventario de dados Cliente.xlsm'
 
 # Verificar se arquivo existe
 if os.path.exists(file_path):
@@ -19,8 +19,8 @@ if os.path.exists(file_path):
         print(f'{i}. {sheet_name}')
     print()
     
-    # 2. Verificar se existe a aba 'Inventário SONEPAR'
-    target_sheet = 'Inventário_Sonepar'
+    # 2. Verificar se existe a aba 'Inventário Cliente'
+    target_sheet = 'Inventário_Cliente'
     if target_sheet in wb.sheetnames:
         print('=' * 60)
         print(f'2. COLUNAS DA ABA "{target_sheet}":')

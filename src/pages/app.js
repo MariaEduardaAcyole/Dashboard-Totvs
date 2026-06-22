@@ -39,15 +39,15 @@ const chartFieldMap = {
 
 let inventoryRiskLinks = {};
 const INVENTORY_SHEET_NAMES = [
-    "Inventário SONEPAR",
-    "Inventario SONEPAR",
+    "Mapeamento",
+    "Inventário Cliente",
+    "Inventario Cliente",
     "Inventário",
     "Inventario",
     "Dados do Inventário",
     "Inventario LGPD"
 ];
 const INVENTORY_REQUIRED_FIELDS = [
-    "empresa",
     "area",
     "processo",
     "subprocesso",
@@ -115,34 +115,113 @@ function switchTab(tabId) {
 // =============================================
 // UPLOAD
 // =============================================
-
 const COLUMN_MAP = {
-    id: ["id"],
-    empresa: ["Empresa"],
-    area: ["Nome da área de negócio"],
-    responsavel: [" Nome do responsável pelo processo"],
-    processo: ["Nome do processo"],
-    subprocesso: ["Nome do sub-processo"],
-    descricao: ["Descrição do subprocesso"],
+    id: ["id", "ID"],
 
-    dados: ["Quais dados?"],
-    sensivel: ["Utiliza dado sensível ? (Sim ou Não)"],
-    dadosSensiveis: ["Quais dados sensíveis?"],
+    empresa: [
+        "Empresa",
+        "Nome da empresa",
+        "Empresa/Unidade"
+    ],
 
-    menor: ["Utiliza algum tipo de dado de menores de 18 anos?"],
-    dadosMenor: ["Descreva os dados de menores de 18 anos."],
+    area: [
+        "Nome da área de negócio",
+        "Área de negócio",
+        "Área",
+        "Nome da Área"
+    ],
 
-    armazenamento: ["Armazenamento (Físico ou digital)"],
-    sistemas: ["Quais Sistemas são acessados? (Tráfego)"],
-    tipoTitular: ["Tipo do Titular?"],
+    responsavel: [
+        " Nome do responsável pelo processo",
+        "Nome do responsável pelo processo",
+        "Nome e e-mail do responsável pelo processo"
+    ],
 
-    baseLegal: ["Base legal de tratamento"],
+    processo: [
+        "Nome do processo",
+        "Processo"
+    ],
 
-    terceiros: ["Há compartilhamento de dados com Terceiros e/ou Prestadores de Serviços?"],
-    nomeTerceiro: ["Caso sim, informe o nome do Terceiro e/ou Prestador de Serviço que recebe os dados."],
+    subprocesso: [
+        "Nome do sub-processo",
+        "Sub-processo",
+        "Subprocesso"
+    ],
 
-    transfIntl: ["Há transferência internacional de dados?"],
-    paises: ["Caso sim, informe quais os Países e Estados que recebem estes dados."]
+    descricao: [
+        "Descrição do subprocesso",
+        "Descrição do sub-processo"
+    ],
+
+    dados: [
+        "Quais dados?",
+        "Quais dados são tratados?",
+        "Dados tratados"
+    ],
+
+    sensivel: [
+        "Utiliza dado sensível ? (Sim ou Não)",
+        "Utiliza dado sensível ?",
+        "Utiliza dado sensível?"
+    ],
+
+    dadosSensiveis: [
+        "Quais dados sensíveis?",
+        "Quais dados sensíveis são utilizados?"
+    ],
+
+    menor: [
+        "Utiliza algum tipo de dado de menores de 18 anos?",
+        "Utiliza dado de menores?"
+    ],
+
+    dadosMenor: [
+        "Descreva os dados de menores de 18 anos.",
+        "Dados de menores"
+    ],
+
+    armazenamento: [
+        "Armazenamento (Físico ou digital)",
+        "Armazenamento"
+    ],
+
+    sistemas: [
+        "Quais Sistemas são acessados? (Tráfego)",
+        "Quais sistemas são acessados?",
+        "Sistemas"
+    ],
+
+    tipoTitular: [
+        "Tipo do Titular?",
+        "Tipo do titular"
+    ],
+
+    baseLegal: [
+        "Base legal de tratamento",
+        "Base Legal de Tratamento",
+        "Base legal"
+    ],
+
+    terceiros: [
+        "Há compartilhamento de dados com Terceiros e/ou Prestadores de Serviços?",
+        "Há compartilhamento com terceiros?"
+    ],
+
+    nomeTerceiro: [
+        "Caso sim, informe o nome do Terceiro e/ou Prestador de Serviço que recebe os dados.",
+        "Informe o nome do Terceiro e/ou Prestador de Serviço que recebe os dados"
+    ],
+
+    transfIntl: [
+        "Há transferência internacional de dados?",
+        "Transferência internacional"
+    ],
+
+    paises: [
+        "Caso sim, informe quais os Países e Estados que recebem estes dados.",
+        "Países",
+        "Países e Estados"
+    ]
 };
 
 function handleFileUpload(event) {
