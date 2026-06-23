@@ -1,124 +1,32 @@
 // Funções de gráfico reutilizáveis para app e matriz
-function createChart(id, dataset, type, indexAxis) {
-    const ctx = document.getElementById(id);
+function createChart(chartId, chartData, type, indexAxis = "x") {
+    const labels = Object.keys(chartData);
+    const values = Object.values(chartData);
+
+    // Corrigido: legenda usa exatamente os mesmos valores do gráfico
+    const labelsComValor = labels.map((label, i) => 
+        `${label} (${values[i]})`
+    );
+
+    if (charts[chartId]) {
+        charts[chartId].destroy();
+    }
+
+    const ctx = document.getElementById(chartId);
     if (!ctx) return;
 
-    const labels = Object.keys(dataset).filter(k => k && k !== "undefined");
-    const data = labels.map(k => dataset[k]);
-    const chartField = chartFieldMap[id];
-    const activeFiltersForChart = chartFilters[chartField] || [];
-
-    const colors = [
-        '#4f8ef7', '#06b6d4', '#10b981', '#f59e0b', '#ef4444',
-        '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1'
-    ];
-
-    const backgroundColors = type === 'doughnut'
-        ? labels.map((label, index) => {
-            const filterValue = chartLabelToFilterValue(id, label);
-            return activeFiltersForChart.includes(filterValue)
-                ? colors[index % colors.length]
-                : 'rgba(100, 100, 100, 0.25)';
-        })
-        : colors[0];
-
-    const chartConfig = {
-        type,
+    charts[chartId] = new Chart(ctx, {
+        type: type,
         data: {
-            labels: labels,
+            labels: labelsComValor,
             datasets: [{
-                label: id.replace('chart', ''),
-                data: data,
-                backgroundColor: backgroundColors,
-                borderColor: type === 'doughnut' ? '#141720' : '#4f8ef7',
-                borderWidth: type === 'doughnut' ? 2 : 1,
-                borderRadius: 6,
-                hoverBackgroundColor: 'rgba(79, 142, 247, 0.9)'
+                data: values
             }]
         },
         options: {
-            indexAxis: indexAxis || 'x',
-            responsive: true,
-            onClick: (event, elements, chart) => {
-                if (elements && elements.length > 0) {
-                    const index = elements[0].index;
-                    const label = chart.data.labels[index];
-                    if (label) {
-                        filterByChartClick(id, label);
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: type === 'doughnut',
-                    position: 'bottom',
-                    labels: {
-                        color: '#e8eaf0',
-                        font: { size: 12 },
-                        padding: 15,
-                        cursor: 'pointer'
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 10,
-                    borderRadius: 6,
-                    titleFont: { size: 13, weight: 'bold' },
-                    bodyFont: { size: 12 },
-                    callbacks: {
-                        label: function(context) {
-                            let value;
-                            if (context.parsed !== undefined) {
-                                if (typeof context.parsed === "object") {
-                                    value = context.parsed.x ?? context.parsed.y;
-                                } else {
-                                    value = context.parsed;
-                                }
-                            }
-
-                            const subprocessCharts = new Set([
-                                'chartArea', 'chartAreaInv',
-                                'chartEmpresasSubprocessos', 'chartEmpresasSubprocessosInv'
-                            ]);
-                            const labelPrefix = subprocessCharts.has(id)
-                                ? 'Subprocessos'
-                                : 'Aparições';
-
-                            return labelPrefix + ': ' + (value ?? 0);
-                        }
-                    }
-                }
-            },
-            scales: type === 'doughnut' ? {} : {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        display: indexAxis === 'y' ? false : true,
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: '#7a8299',
-                        font: { size: 11 }
-                    }
-                },
-                x: {
-                    grid: { display: indexAxis === 'y' ? true : false, color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: {
-                        color: '#7a8299',
-                        font: { size: 11 },
-                        maxRotation: indexAxis === 'y' ? 0 : 45,
-                        minRotation: 0
-                    }
-                }
-            }
+            indexAxis
         }
-    };
-
-    if (charts[id]) {
-        charts[id].destroy();
-    }
-
-    charts[id] = new Chart(ctx, chartConfig);
+    });
 }
 
 function createRiskChart(id, dataset, type) {
