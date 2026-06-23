@@ -75,7 +75,16 @@ function createChart(id, dataset, type, indexAxis) {
                                     value = context.parsed;
                                 }
                             }
-                            return 'Aparições: ' + (value ?? 0);
+
+                            const subprocessCharts = new Set([
+                                'chartArea', 'chartAreaInv',
+                                'chartEmpresasSubprocessos', 'chartEmpresasSubprocessosInv'
+                            ]);
+                            const labelPrefix = subprocessCharts.has(id)
+                                ? 'Subprocessos'
+                                : 'Aparições';
+
+                            return labelPrefix + ': ' + (value ?? 0);
                         }
                     }
                 }

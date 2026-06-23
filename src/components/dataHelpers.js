@@ -31,6 +31,13 @@ function normalizeFilterValue(fieldName, value) {
 function chartLabelToFilterValue(chartId, label) {
     const normalizedLabel = normalizeText(label);
 
+    if (
+        chartId === 'chartSensivel' || chartId === 'chartSensivelInv'
+        || chartId === 'chartMenor' || chartId === 'chartMenorInv'
+    ) {
+        return normalizedLabel === 'sim' ? 'sim' : 'não';
+    }
+
     if (chartId === 'chartTransfIntl' || chartId === 'chartTransfIntlInv') {
         return normalizedLabel.includes('com') ? 'sim' : 'não';
     }
@@ -46,7 +53,7 @@ function matchesFilterValue(fieldName, rowValue, filterValue) {
     const normalizedFilter = normalizeFilterValue(fieldName, filterValue);
 
     if (fieldName === 'sensivel' || fieldName === 'menor') {
-        return rowValue === normalizedFilter;
+        return rowValue === normalizeFilterValue(fieldName, filterValue);
     }
 
     if (fieldName === 'terceiros' || fieldName === 'transfIntl') {
@@ -85,18 +92,74 @@ function getNormalizedHeaders(row) {
     return Object.keys(row).map(key => normalizeText(key));
 }
 
-function fieldExistsInHeaders(headers, possibleNames) {
-    return possibleNames.some(name => {
-        const normalizedName = normalizeText(name);
-        return headers.some(header => header.includes(normalizedName) || normalizedName.includes(header));
-    });
+function headerMatchesColumn(normalizedHeader, fieldName, columnName, matchMode) {
+    const normalizedName = normalizeText(columnName);
+    const headerAscii = normalizeHeader(normalizedHeader);
+
+    if (fieldName === 'subprocesso' && headerAscii.includes('descricao')) {
+        return false;
+    }
+
+    if (fieldName === 'descricao' && !headerAscii.includes('descricao')) {
+        return false;
+    }
+
+    if (normalizedHeader === normalizedName) {
+        return true;
+    }
+
+    if (matchMode !== 'fuzzy') {
+        return false;
+    }
+
+    if (normalizedName.length < 10) {
+        return false;
+    }
+
+    if (normalizedHeader.includes(normalizedName)) {
+        return true;
+    }
+
+    return headerAscii.length >= 10 && headerAscii.includes(normalizeHeader(normalizedName));
+}
+
+function findColumnKey(row, field) {
+    const possibleNames = COLUMN_MAP[field];
+    if (!possibleNames) return null;
+
+    const keys = Object.keys(row);
+    const sortedNames = [...possibleNames].sort(
+        (a, b) => normalizeText(b).length - normalizeText(a).length
+    );
+
+    for (const matchMode of ['exact', 'fuzzy']) {
+        for (const name of sortedNames) {
+            for (const key of keys) {
+                const normalizedKey = normalizeText(key);
+                if (headerMatchesColumn(normalizedKey, field, name, matchMode)) {
+                    return key;
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+function fieldExistsInHeaders(headers, possibleNames, fieldName) {
+    return possibleNames.some(name =>
+        headers.some(header =>
+            headerMatchesColumn(header, fieldName, name, 'exact')
+            || headerMatchesColumn(header, fieldName, name, 'fuzzy')
+        )
+    );
 }
 
 function listMissingColumns(row, requiredFields, columnMap) {
     const headers = getNormalizedHeaders(row);
     return requiredFields.filter(field => {
         const possibleNames = columnMap[field] || [];
-        return !fieldExistsInHeaders(headers, possibleNames);
+        return !fieldExistsInHeaders(headers, possibleNames, field);
     });
 }
 
@@ -126,18 +189,15 @@ function findBestSheet(workbook, possibleNames) {
 }
 
 function getValue(row, field) {
-    const possibleNames = COLUMN_MAP[field];
-    if (!possibleNames) return "";
+    const key = findColumnKey(row, field);
+    return key ? row[key] : "";
+}
 
-    const keys = Object.keys(row);
-    for (const key of keys) {
-        const normalizedKey = normalizeText(key);
-        for (const name of possibleNames) {
-            if (normalizedKey.includes(normalizeText(name))) {
-                return row[key];
-            }
-        }
-    }
+function getSubprocessoCount(row) {
+    const subs = (row.subprocesso || []).filter(sub => {
+        const normalized = normalizeText(sub);
+        return normalized && normalized !== 'não informado' && normalized !== 'nao informado';
+    });
 
-    return "";
+    return subs.length > 0 ? subs.length : 1;
 }

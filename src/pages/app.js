@@ -50,7 +50,6 @@ const INVENTORY_SHEET_NAMES = [
 const INVENTORY_REQUIRED_FIELDS = [
     "area",
     "processo",
-    "subprocesso",
     "dados"
 ];
 // =============================================
@@ -132,7 +131,6 @@ const COLUMN_MAP = {
     ],
 
     responsavel: [
-        " Nome do responsável pelo processo",
         "Nome do responsável pelo processo",
         "Nome e e-mail do responsável pelo processo"
     ],
@@ -188,7 +186,8 @@ const COLUMN_MAP = {
     sistemas: [
         "Quais Sistemas são acessados? (Tráfego)",
         "Quais sistemas são acessados?",
-        "Sistemas"
+        "Sistemas",
+        "Como e onde são armazenado os dados físicos e digitais do processo?"
     ],
 
     tipoTitular: [
@@ -288,63 +287,55 @@ function handleFileUpload(event) {
 // =============================================
 function normalizeData() {
     data = rawData.map((row, idx) => {
+        // Captura os valores brutos baseando-se estritamente no mapeamento de colunas detectado
+        let areaOriginal = getValue(row, "area") || row["Nome da área de negócio"] || row["Área"] || "";
+        let processoBruto = getValue(row, "processo") || row["Nome do processo"] || row["Processo"] || "";
+        let subprocessoBruto = getValue(row, "subprocesso") || row["Nome do sub-processo"] || row["Sub-processo"] || "";
 
-        const sensivelRaw = normalizeText(getValue(row, "sensivel"));
-const sensivel = 
-    sensivelRaw === "sim" ||
-    sensivelRaw === "s" ||
-    sensivelRaw.includes("sim");
+        // Garante que o texto seja tratado sem espaços invisíveis nas pontas
+        if (typeof areaOriginal === 'string') areaOriginal = areaOriginal.trim();
+        if (typeof processoBruto === 'string') processoBruto = processoBruto.trim();
+        if (typeof subprocessoBruto === 'string') subprocessoBruto = subprocessoBruto.trim();
 
+        // Normalização das flags de risco
+        const sensivelRaw = normalizeText(getValue(row, "sensivel") || "");
+        const sensivel = sensivelRaw === "sim" || sensivelRaw === "s" || sensivelRaw.includes("sim");
 
-const menorRaw = normalizeText(getValue(row, "menor"));
-
-const menor =
-    menorRaw === "sim" ||
-    menorRaw === "s" ||
-    menorRaw.includes("sim");
+        const menorRaw = normalizeText(getValue(row, "menor") || "");
+        const menor = menorRaw === "sim" || menorRaw === "s" || menorRaw.includes("sim");
 
         let risco = "baixo";
         if (sensivel || menor) risco = "alto";
         if (sensivel && menor) risco = "crítico";
 
-        const firstKey = Object.keys(row)[0];
-        const rawId = getValue(row, "id") || row[firstKey] || "";
+        const empresaBruto = getValue(row, "empresa");
 
         return {
-            id: rawId,
+            id: getValue(row, "id") || (idx + 1),
             origIndex: idx,
-
-            empresa: splitMulti(getValue(row, "empresa")),
-            area: splitMulti(getValue(row, "area")),
-            processo: splitMulti(getValue(row, "processo")),
-            subprocesso: getValue(row, "subprocesso") || "não informado",
-
-            dados: splitMulti(getValue(row, "dados")),
-
+            empresa: empresaBruto ? splitMulti(empresaBruto) : [],
+            area: areaOriginal ? [areaOriginal] : [],
+            processo: processoBruto ? [processoBruto] : [],
+            subprocesso: subprocessoBruto ? splitMulti(subprocessoBruto) : [],
+            dados: splitMulti(getValue(row, "dados") || ""),
             sensivel,
             menor,
-
-            baseLegal: splitMulti(getValue(row, "baseLegal")),
-
-            sistemas: splitMulti(getValue(row, "sistemas")),
-
+            baseLegal: splitMulti(getValue(row, "baseLegal") || ""),
+            sistemas: splitMulti(getValue(row, "sistemas") || ""),
             armazenamento: getValue(row, "armazenamento") || "não informado",
-
-            terceiros: normalizeText(getValue(row, "terceiros")),
-
-            nomeTerceiro: splitMulti(getValue(row, "nomeTerceiro")),
-
-            transfIntl: normalizeText(getValue(row, "transfIntl")),
-
-            paises: splitMulti(getValue(row, "paises")),
-
+            terceiros: normalizeText(getValue(row, "terceiros")) === "sim", 
+            nomeTerceiro: splitMulti(getValue(row, "nomeTerceiro") || ""),
+            transfIntl: normalizeText(getValue(row, "transfIntl")) === "sim", 
+            paises: splitMulti(getValue(row, "paises") || ""),
             nivelRisco: risco
         };
-
-    }).filter(r => (r.id && String(r.id).trim() !== "") || (Array.isArray(r.processo) && r.processo.length > 0));
-
+    }).filter(r => {
+        // SEGURANÇA E INDEPENDÊNCIA: Só aceita a linha se ela tiver uma Área e um Processo TEXTUAIS e REAIS preenchidos
+        const temArea = r.area.length > 0 && r.area[0] !== "" && r.area[0] !== "não informado";
+        const temProcesso = r.processo.length > 0 && r.processo[0] !== "" && r.processo[0] !== "não informado";
+        return temArea && temProcesso;
+    });
 }
-
 function getInventoryRowKey(row) {
     const rawId = normalizeText(row.id || "");
     if (rawId) return rawId;
@@ -490,14 +481,15 @@ function applyFilters() {
         if (fMenor === "Não" && row.menor) return false;
 
         // MULTI-FILTROS de gráfico (acumulam) - usa chartFilters atual
-        for (const [field, values] of Object.entries(chartFilters)) {
-            if (!values || values.length === 0) continue;
+    // MULTI-FILTROS de gráfico (acumulam) - usa chartFilters atual
+for (const [field, values] of Object.entries(chartFilters)) {
+    if (!values || values.length === 0) continue;
 
-            const fieldValue = row[field];
-            const matches = values.some(value => matchesFilterValue(field, fieldValue, value));
+    const fieldValue = row[field];
+    const matches = values.some(value => matchesFilterValue(field, fieldValue, value));
 
-            if (!matches) return false;
-        }
+    if (!matches) return false;
+}
         return true;
     });
 
@@ -512,7 +504,7 @@ function updateCharts() {
 }
 
 function renderInventoryCharts() {
-    createChart("chartAreaInv", groupCount("area"), "bar");
+    createChart("chartAreaInv", sortByValue(groupSubprocessosBy("area")), "bar");
     createChart("chartBaseLegalInv", groupCount("baseLegal"), "doughnut");
     createChart("chartSistemasInv", topN(sortByValue(groupCount("sistemas")), 10), "bar", "y");
     createChart("chartTerceirosInv", topN(sortByValue(groupCount("nomeTerceiro")), 10), "bar", "y");
@@ -525,29 +517,15 @@ function renderInventoryCharts() {
         "Sim": filtered.filter(r => r.menor).length,
         "Não": filtered.filter(r => !r.menor).length
     }, "doughnut");
-    const processosTransfIntl = new Set(
-        filtered.filter(r => r.transfIntl === "sim").flatMap(r => r.processo)
-    ).size;
-    const totalProcessosIntl = new Set(filtered.flatMap(r => r.processo)).size;
     createChart("chartTransfIntlInv", {
-        "Com Transferência Intl": processosTransfIntl,
-        "Sem Transferência Intl": totalProcessosIntl - processosTransfIntl
+        "Com Transferência Intl": filtered.filter(r => r.transfIntl).length,
+        "Sem Transferência Intl": filtered.filter(r => !r.transfIntl).length
     }, "doughnut");
-    const processosComTerceiros = new Set(
-        filtered.filter(r => r.terceiros === "sim").flatMap(r => r.processo)
-    ).size;
-    const totalProcessosTerceiros = new Set(filtered.flatMap(r => r.processo)).size;
     createChart("chartComTerceirosInv", {
-        "Com Compartilhamento": processosComTerceiros,
-        "Sem Compartilhamento": totalProcessosTerceiros - processosComTerceiros
+        "Com Compartilhamento": filtered.filter(r => r.terceiros).length,
+        "Sem Compartilhamento": filtered.filter(r => !r.terceiros).length
     }, "doughnut");
-    const empresasSubprocessos = filtered.reduce((acc, r) => {
-        r.empresa.forEach(emp => {
-            acc[emp] = (acc[emp] || 0) + 1;
-        });
-        return acc;
-    }, {});
-    createChart("chartEmpresasSubprocessosInv", sortByValue(empresasSubprocessos), "bar");
+    createChart("chartEmpresasSubprocessosInv", sortByValue(groupSubprocessosBy("empresa")), "bar");
     createChart("chartTiposDadosInv", groupCount("dados"), "doughnut");
 }
 
@@ -588,19 +566,23 @@ function resetFilters() {
 // =============================================
 function renderKPIs() {
     const kpiGrid = document.getElementById("kpiGrid");
-    if (!kpiGrid) return; // Se não está na aba de visão geral, não renderiza
+    if (!kpiGrid) return; 
     
-    const total = filtered.length;
-    const sensiveis = filtered.filter(d => d.sensivel).length;
+const total = filtered.reduce((sum, r) => sum + getSubprocessoCount(r), 0);    const sensiveis = filtered.filter(d => d.sensivel).length;
     const menores = filtered.filter(d => d.menor).length;
 
-    // Contagem de empresas únicas após split e deduplicação
-   const uniqueEmpresas = new Set(
-    filtered.flatMap(d => d.empresa.map(e => normalizeHeader(e)))
-).size;
+    // CORREÇÃO: Filtra para não contar "não informado" ou valores vazios como uma empresa válida
+    const uniqueEmpresas = new Set(
+        filtered.flatMap(d => d.empresa)
+                .map(e => normalizeText(e))
+                .filter(e => e && e !== "" && e !== "nao informado")
+    ).size;
 
+    // CORREÇÃO: Filtra para não contar processos inválidos ou vazios
     const processos = new Set(
         filtered.flatMap(d => d.processo)
+                .map(p => normalizeText(p))
+                .filter(p => p && p !== "" && p !== "nao informado")
     ).size;
 
     const riskIds = new Set(
@@ -612,7 +594,7 @@ function renderKPIs() {
     const relatedRiskCount = riskIds.size;
 
     kpiGrid.innerHTML = `
-         <div class="kpi-card good"><div class="kpi-label">Empresas</div><div class="kpi-value">${uniqueEmpresas}</div></div>
+        <div class="kpi-card good"><div class="kpi-label">Empresas</div><div class="kpi-value">${uniqueEmpresas}</div></div>
         <div class="kpi-card"><div class="kpi-label">Subprocessos</div><div class="kpi-value">${total}</div></div>
         <div class="kpi-card danger"><div class="kpi-label">Sensíveis</div><div class="kpi-value">${sensiveis}</div></div>
         <div class="kpi-card purple"><div class="kpi-label">Menores</div><div class="kpi-value">${menores}</div></div>
@@ -620,29 +602,49 @@ function renderKPIs() {
         <div class="kpi-card danger"><div class="kpi-label">Riscos Relacionados</div><div class="kpi-value">${relatedRiskCount}</div></div>
     `;
 }
-
 // =============================================
 // AGRUPAMENTO
 // =============================================
-function groupCount(field) {
-    const result = filtered.reduce((acc, r) => {
-        const values = Array.isArray(r[field]) ? r[field] : [r[field]];
+function groupCount(field){
 
-        values.forEach(v => {
-            const val = normalizeText(v);
-            if (!val || val === "" || val === "não informado" || val === "n/a" || val === "na") return;
-            acc[val] = (acc[val] || 0) + 1;
+    return filtered.reduce((acc,r)=>{
+
+        const values = Array.isArray(r[field])
+            ? r[field]
+            : [r[field]];
+
+        values.forEach(v=>{
+
+            if(!v) return;
+
+            acc[v]=(acc[v]||0)+1;
+
+        });
+
+        return acc;
+
+    },{});
+
+}
+
+function groupSubprocessosBy(field) {
+    return filtered.reduce((acc, row) => {
+        const groups = Array.isArray(row[field]) ? row[field] : [row[field]];
+        const count = getSubprocessoCount(row);
+
+        groups.forEach(group => {
+            const value = typeof group === 'string' ? group.trim() : group;
+            if (!value) return;
+
+            const normalized = normalizeText(value);
+            if (normalized === 'não informado' || normalized === 'nao informado') return;
+
+            acc[value] = (acc[value] || 0) + count;
         });
 
         return acc;
     }, {});
-    
-    // Remove chaves vazias
-    return Object.fromEntries(
-        Object.entries(result).filter(([key]) => key && key !== "" && key !== "undefined" && key !== "n/a" && key !== "na")
-    );
 }
-
 // Ordena dados em ordem decrescente (mais mencionados primeiro)
 function sortByValue(obj) {
     return Object.fromEntries(
@@ -689,8 +691,11 @@ function filterByChartClick(chartId, label) {
 }
 
 function updateFilterIndicator() {
-    const indicator = document.getElementById('chartFilterIndicator');
-    if (!indicator) return;
+    const indicators = [
+        document.getElementById('chartFilterIndicator'),
+        document.getElementById('chartFilterIndicatorVisao')
+    ].filter(Boolean);
+    if (!indicators.length) return;
 
     const fieldLabels = {
         "area": "Área",
@@ -714,10 +719,15 @@ function updateFilterIndicator() {
     }
 
     if (filterHTML) {
-        indicator.innerHTML = "<strong>Filtros de gráfico ativos:</strong>" + filterHTML;
-        indicator.style.display = 'block';
+        const content = "<strong>Filtros de gráfico ativos:</strong>" + filterHTML;
+        indicators.forEach(indicator => {
+            indicator.innerHTML = content;
+            indicator.style.display = 'block';
+        });
     } else {
-        indicator.style.display = 'none';
+        indicators.forEach(indicator => {
+            indicator.style.display = 'none';
+        });
     }
 }
 
@@ -810,60 +820,82 @@ function renderTable() {
 // =============================================
 // CHARTS
 // =============================================
+
 function renderCharts() {
-    createChart("chartArea", groupCount("area"), "bar");
-    createChart("chartBaseLegal", groupCount("baseLegal"), "doughnut");
-    
-    // Gráficos horizontais ordenados por frequência (mais mencionados primeiro)
-    createChart("chartSistemas", topN(sortByValue(groupCount("sistemas")), 10), "bar", "y");
-    createChart("chartTerceiros", topN(sortByValue(groupCount("nomeTerceiro")), 10), "bar", "y");
-    createChart("chartPaises", sortByValue(groupCount("paises")), "bar");
 
-    createChart("chartSensivel", {
-        "Sim": filtered.filter(r => r.sensivel).length,
-        "Não": filtered.filter(r => !r.sensivel).length
-    }, "doughnut");
+    createChart(
+        "chartArea",
+        sortByValue(groupSubprocessosBy("area")),
+        "bar"
+    );
 
-    createChart("chartMenor", {
-        "Sim": filtered.filter(r => r.menor).length,
-        "Não": filtered.filter(r => !r.menor).length
-    }, "doughnut");
+    createChart(
+        "chartBaseLegal",
+        groupCount("baseLegal"),
+        "doughnut"
+    );
 
-    // Transferência Internacional
-    const processosTransfIntl = new Set(
-        filtered.filter(r => r.transfIntl === "sim").flatMap(r => r.processo)
-    ).size;
-    const totalProcessosIntl = new Set(filtered.flatMap(r => r.processo)).size;
+    createChart(
+        "chartSistemas",
+        topN(sortByValue(groupCount("sistemas")),10),
+        "bar",
+        "y"
+    );
 
-    createChart("chartTransfIntl", {
-        "Com Transferência Intl": processosTransfIntl,
-        "Sem Transferência Intl": totalProcessosIntl - processosTransfIntl
-    }, "doughnut");
+    createChart(
+        "chartTerceiros",
+        topN(sortByValue(groupCount("nomeTerceiro")),10),
+        "bar",
+        "y"
+    );
 
-    // Compartilhamento com Terceiros
-    const processosComTerceiros = new Set(
-        filtered.filter(r => r.terceiros === "sim").flatMap(r => r.processo)
-    ).size;
-    const totalProcessosTerceiros = new Set(filtered.flatMap(r => r.processo)).size;
+    createChart(
+        "chartPaises",
+        sortByValue(groupCount("paises")),
+        "bar"
+    );
 
-    createChart("chartComTerceiros", {
-        "Com Compartilhamento": processosComTerceiros,
-        "Sem Compartilhamento": totalProcessosTerceiros - processosComTerceiros
-    }, "doughnut");
+    createChart("chartSensivel",{
+        "Sim": filtered.filter(r=>r.sensivel).length,
+        "Não": filtered.filter(r=>!r.sensivel).length
+    },"doughnut");
 
-    // Empresas x Subprocessos
-    const empresasSubprocessos = filtered.reduce((acc, r) => {
-        r.empresa.forEach(emp => {
-            acc[emp] = (acc[emp] || 0) + 1;
-        });
-        return acc;
-    }, {});
-    createChart("chartEmpresasSubprocessos", sortByValue(empresasSubprocessos), "bar");
+    createChart("chartMenor",{
+        "Sim": filtered.filter(r=>r.menor).length,
+        "Não": filtered.filter(r=>!r.menor).length
+    },"doughnut");
 
-    // Tipos de Dados
-    createChart("chartTiposDados", groupCount("dados"), "doughnut");
+    createChart("chartTransfIntl",{
+        "Com Transferência Intl":
+            filtered.filter(r=>r.transfIntl).length,
+
+        "Sem Transferência Intl":
+            filtered.filter(r=>!r.transfIntl).length
+
+    },"doughnut");
+
+    createChart("chartComTerceiros",{
+        "Com Compartilhamento":
+            filtered.filter(r=>r.terceiros).length,
+
+        "Sem Compartilhamento":
+            filtered.filter(r=>!r.terceiros).length
+
+    },"doughnut");
+
+
+    createChart(
+        "chartEmpresasSubprocessos",
+        sortByValue(groupSubprocessosBy("empresa")),
+        "bar"
+    );
+
+    createChart(
+        "chartTiposDados",
+        groupCount("dados"),
+        "doughnut"
+    );
 }
-
 
 // =============================================
 // RENDER GERAL
