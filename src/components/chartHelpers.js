@@ -1,5 +1,11 @@
+// =====================================
+// INSTÂNCIAS DOS GRÁFICOS
+// =====================================
+
+const charts = {};
+const riskCharts = {};
 // Funções de gráfico reutilizáveis para app e matriz
-function createChart(chartId, chartData, type, indexAxis = "x") {
+export function createChart(chartId, chartData, type, indexAxis = "x") {
     const labels = Object.keys(chartData);
     const values = Object.values(chartData);
 
@@ -29,7 +35,7 @@ function createChart(chartId, chartData, type, indexAxis = "x") {
     });
 }
 
-function createRiskChart(id, dataset, type) {
+export function createRiskChart(id, dataset, type) {
     const ctx = document.getElementById(id);
     if (!ctx) return;
 

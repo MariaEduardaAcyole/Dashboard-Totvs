@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Dashboard LGPD</title>
+<title>Dashboard LGPD</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="src/assets/style.css">
+<link rel="stylesheet" href="../src/assets/style.css">
 </head>
 
 <body>
 
-  <!-- SIDEBAR -->
+ <!-- SIDEBAR -->
   <nav class="sidebar">
     <div class="sidebar-logo">
       <div class="brand" id="nomecliente"></div>
@@ -23,7 +22,7 @@
     </div>
     <div class="sidebar-nav">
       <div class="nav-section">Análise</div>
-      <a class="nav-item active" href="./index.html">
+      <a class="nav-item active" href="../index.html">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7" />
           <rect x="14" y="3" width="7" height="7" />
@@ -32,14 +31,14 @@
         </svg>
         Visão Geral
       </a>
-      <a class="nav-item" href="./pages/inventario.html">
+      <a class="nav-item" href="./inventario.html">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path
             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
         Inventário
       </a>
-      <a class="nav-item" href="./pages/riscos.html">
+      <a class="nav-item" href="./riscos.html">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
           <line x1="12" y1="9" x2="12" y2="13" />
@@ -48,21 +47,21 @@
         Registros de Risco
       </a>
       <div class="nav-section" style="margin-top:8px">LGPD</div>
-      <a class="nav-item" href="./pages/matriz.html">
+      <a class="nav-item" href="./matriz.html">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10" />
           <path d="M12 8v4l3 3" />
         </svg>
         Matriz de Risco
       </a>
-      <a class="nav-item" href="./pages/plano.html">
+      <a class="nav-item" href="./plano.html">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="9 11 12 14 22 4" />
           <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
         </svg>
         Plano de Ação
       </a>
-      <a class="nav-item" href="./pages/heatmap.html">
+      <a class="nav-item" href="./heatmap.html">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="18" height="18" rx="2" />
           <line x1="3" y1="9" x2="21" y2="9" />
@@ -78,8 +77,6 @@
 
   <!-- MAIN -->
   <main class="main">
-
-
     <div class="topbar">
       <h1 id="pageTitle">Visão Geral</h1>
 
@@ -108,77 +105,31 @@
     </div>
 
     <div class="content">
-      <div class="kpi-grid" id="kpiGrid">
-
-        <div class="kpi-card">
-          <div class="kpi-title">Subprocessos</div>
-          <div class="kpi-value" id="kpiSubprocessos">0</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Áreas</div>
-          <div class="kpi-value" id="kpiAreas">0</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Dados Sensíveis</div>
-          <div class="kpi-value" id="kpiSensivel">0</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Dados de Menores</div>
-          <div class="kpi-value" id="kpiMenor">0</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Compartilhamento</div>
-          <div class="kpi-value" id="kpiTerceiros">0</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Transf. Internacional</div>
-          <div class="kpi-value" id="kpiTransferencia">0</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Sistemas Críticos</div>
-          <div class="kpi-value" id="kpiSistemas">0</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Exposição LGPD</div>
-          <div class="kpi-value" id="kpiExposicao">0</div>
-        </div>
-
-      </div>
-      <!-- =================== VISÃO GERAL =================== -->
-      <div class="tab-panel active" id="tab-visao-geral">
-        <div class="kpi-grid" id="kpiGrid"></div>
-
-
-        <!-- Filtros -->
+     <!-- =================== INVENTÁRIO =================== -->
+      <!-- =================== INVENTÁRIO =================== -->
+      <div class="tab-panel" id="tab-inventario">
         <div class="filter-bar">
           <div class="filter-group">
             <div class="filter-label">Empresa</div>
-            <select id="f-empresa" onchange="applyFilters()">
+            <select id="fi-empresa" onchange="applyFilters()">
               <option value="">Todas</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label">Área</div>
-            <select id="f-area" onchange="applyFilters()">
+            <select id="fi-area" onchange="applyFilters()">
               <option value="">Todas</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label">Processo</div>
-            <select id="f-processo" onchange="applyFilters()">
+            <select id="fi-processo" onchange="applyFilters()">
               <option value="">Todos</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label">Dados Sensíveis</div>
-            <select id="f-sensivel" onchange="applyFilters()">
+            <select id="fi-sensivel" onchange="applyFilters()">
               <option value="">Todos</option>
               <option value="Sim">Sim</option>
               <option value="Não">Não</option>
@@ -186,7 +137,7 @@
           </div>
           <div class="filter-group">
             <div class="filter-label">Dados de Menores</div>
-            <select id="f-menor" onchange="applyFilters()">
+            <select id="fi-menor" onchange="applyFilters()">
               <option value="">Todos</option>
               <option value="Sim">Sim</option>
               <option value="Não">Não</option>
@@ -195,106 +146,125 @@
           <button class="filter-reset" onclick="resetFilters()">↺ Limpar</button>
         </div>
 
-        <div id="chartFilterIndicatorVisao"
+        <!-- Indicador de filtro ativo por gráfico -->
+        <div id="chartFilterIndicator"
           style="display:none; padding: 12px 16px; margin: 12px 0; background: rgba(79, 142, 247, 0.15); border-left: 4px solid #4f8ef7; border-radius: 4px; color: #4f8ef7; font-size: 14px; font-weight: 500;">
         </div>
-
-        <!-- =================== GRÁFICOS VISÃO GERAL =================== -->
-        <!-- Linha 1: Indicadores de dados sensíveis e de menores (doughnut charts) -->
         <div class="charts-grid">
 
           <div class="chart-card chart-wide">
             <div class="chart-title">
               <span class="dot"></span>
-              Ranking de Áreas por Exposição LGPD
+              Subprocessos por Área
             </div>
-            <canvas id="chartAreaRisk"></canvas>
+            <canvas id="chartAreaInv"></canvas>
           </div>
 
 
           <div class="chart-card">
             <div class="chart-title">
               <span class="dot"></span>
-              Índice de Maturidade LGPD
+              Dados Sensíveis
             </div>
-            <canvas id="chartMaturity"></canvas>
-            <div class="maturity-legend">
-
-
-
-    <div class="legend-title">
-        Critérios utilizados
-    </div>
-
-    <div class="legend-item">
-        Dados sensíveis → +30
-    </div>
-
-    <div class="legend-item">
-        Dados de menores → +25
-    </div>
-
-    <div class="legend-item">
-        Compartilhamento com terceiros → +20
-    </div>
-
-    <div class="legend-item">
-        Transferência internacional → +25
-    </div>
-
-</div>
+            <canvas id="chartSensivelInv"></canvas>
           </div>
 
 
           <div class="chart-card">
             <div class="chart-title">
               <span class="dot"></span>
-              Nível de Risco
+              Dados de Menores
             </div>
-            <canvas id="chartRiskLevelResumo"></canvas>
+            <canvas id="chartMenorInv"></canvas>
           </div>
 
 
           <div class="chart-card chart-wide">
             <div class="chart-title">
               <span class="dot"></span>
-              Base Legal x Subprocessos
+              Categorias de Dados
             </div>
-            <canvas id="chartBaseLegalSub"></canvas>
+            <canvas id="chartDataCategoriesInv"></canvas>
           </div>
 
 
           <div class="chart-card chart-wide">
             <div class="chart-title">
               <span class="dot"></span>
-              Riscos por Área
+              Compartilhamento por Área
             </div>
-            <canvas id="chartRelatedRiskArea"></canvas>
+            <canvas id="chartThirdPartyAreaInv"></canvas>
           </div>
 
 
-          <div class="chart-card chart-wide">
+          <div class="chart-card">
             <div class="chart-title">
               <span class="dot"></span>
-              Sistemas Críticos
+              Transferência Internacional
             </div>
-            <canvas id="chartCriticalSystems"></canvas>
+            <canvas id="chartTransfIntlInv"></canvas>
           </div>
 
+
+          <div class="chart-card">
+            <div class="chart-title">
+              <span class="dot"></span>
+              Armazenamento
+            </div>
+            <canvas id="chartStorageInv"></canvas>
+          </div>
+
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Subprocessos — <span id="tableCount">0</span> registros</h3>
+            <input class="search-input" type="text" placeholder="Buscar em toda a tabela..." id="tableSearch"
+              oninput="renderTable()">
+          </div>
+          <div class="table-wrap">
+            <table id="mainTable">
+              <thead>
+                <tr>
+                  <th onclick="sortTable('ID')"># ID</th>
+                  <th onclick="sortTable('Empresa')">Empresa</th>
+                  <th onclick="sortTable('Area')">Área</th>
+                  <th onclick="sortTable('Responsavel')">Responsável</th>
+                  <th onclick="sortTable('Processo')">Processo</th>
+                  <th onclick="sortTable('Subprocesso')">Subprocesso</th>
+                  <th onclick="sortTable('Descricao')">Descrição</th>
+                  <th onclick="sortTable('Dados')">Dados</th>
+                  <th onclick="sortTable('Dado_Sensivel')">Sensível</th>
+                  <th onclick="sortTable('Dados_Sensiveis')">Dados Sensíveis</th>
+                  <th onclick="sortTable('Dado_Menor')">Menor</th>
+                  <th onclick="sortTable('Dados_Menores')">Dados Menores</th>
+                  <th onclick="sortTable('Armazenamento')">Armazenamento</th>
+                  <th onclick="sortTable('Sistemas')">Sistemas</th>
+                  <th onclick="sortTable('Tipo_Titular')">Tipo Titular</th>
+                  <th onclick="sortTable('Base_Legal')">Base Legal</th>
+                  <th onclick="sortTable('Compartilhamento_Terceiros')">Terceiros</th>
+                  <th onclick="sortTable('Nome_Terceiro')">Nome Terceiro</th>
+                  <th onclick="sortTable('Transferencia_Internacional')">Transf. Intl.</th>
+                  <th onclick="sortTable('Paises')">Países</th>
+                  <th onclick="sortTable('Risco')">Risco</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="table-pagination" id="tablePagination"></div>
         </div>
       </div>
     </div>
 
   </main>
 
-<script type="module" src="./src/pages/bootstrap.js"></script>
-
-  <!-- bibliotecas -->
+<script type="module" src="../src/pages/bootstrap.js"></script>
+<!-- bibliotecas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- app -->
-<script type="module" src="./src/pages/app.js"></script>
+<script type="module" src="../src/pages/app.js"></script>
 </body>
-
 </html>

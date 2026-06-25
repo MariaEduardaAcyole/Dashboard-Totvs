@@ -201,3 +201,21 @@ function getSubprocessoCount(row) {
 
     return subs.length > 0 ? subs.length : 1;
 }
+export {
+  normalizeRowKeys,
+  normalizeText,
+  normalizeFilterValue,
+  chartLabelToFilterValue,
+  matchesFilterValue,
+  splitMulti,
+  normalizeHeader,
+  getNormalizedHeaders,
+  headerMatchesColumn,
+  findColumnKey,
+  fieldExistsInHeaders,
+  listMissingColumns,
+  parseSheetWithHeaderDetection,
+  findBestSheet,
+  getValue,
+  getSubprocessoCount
+};
